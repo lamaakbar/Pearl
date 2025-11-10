@@ -7,6 +7,10 @@
     "types": ["vite/client"],
     "jsx": "react-jsx",
     "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@media/*": ["../Media/*"]
+    },
 
     /* Bundler mode */
     "moduleResolution": "bundler",

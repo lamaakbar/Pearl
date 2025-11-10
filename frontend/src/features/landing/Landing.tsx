@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { authenticateController, authenticateSupervisor } from '../../services/dataService'
 import { useSessionStore } from '../../store/useSessionStore'
+import PearlLogo from '@media/PearlLogo.png'
 
 type RoleOption = 'controller' | 'supervisor'
 
@@ -61,6 +62,13 @@ export function Landing() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-6 py-16 text-slate-100">
       <div className="w-full max-w-4xl rounded-3xl border border-slate-800 bg-slate-900/70 p-10 shadow-2xl backdrop-blur">
         <header className="mb-8 text-center">
+          <div className="mb-6 flex justify-center">
+            <img
+              src={PearlLogo}
+              alt="PEARL Early Fatigue Detection System"
+              className="h-32 w-auto drop-shadow-[0_8px_20px_rgba(56,189,248,0.35)]"
+            />
+          </div>
           <p className="font-medium uppercase tracking-[0.35em] text-slate-400">PEARL System</p>
           <h1 className="mt-4 text-3xl font-semibold text-slate-50 md:text-4xl">
             Welcome to PEARL – Early Fatigue Detection System
