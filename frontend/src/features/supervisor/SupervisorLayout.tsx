@@ -1,5 +1,6 @@
 import { NavLink, Navigate, Outlet } from 'react-router-dom'
 import { useSessionStore } from '../../store/useSessionStore'
+import PearlLogo from '@media/PearlLogo.png'
 
 const navClasses = 'rounded-xl px-4 py-2 text-sm font-medium transition hover:bg-slate-800/70'
 
@@ -15,10 +16,17 @@ export function SupervisorLayout() {
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Supervisor Track</p>
-            <h1 className="mt-1 text-lg font-semibold text-slate-100">Welcome back, {supervisor.name}</h1>
-            <p className="text-xs text-slate-500">Supervisor ID · {supervisor.id}</p>
+          <div className="flex items-center gap-4">
+            <img
+              src={PearlLogo}
+              alt="PEARL Logo"
+              className="h-30 w-auto"
+            />
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Supervisor Track</p>
+              <h1 className="mt-1 text-lg font-semibold text-slate-100">Welcome back, {supervisor.name}</h1>
+              <p className="text-xs text-slate-500">Supervisor ID · {supervisor.id}</p>
+            </div>
           </div>
           <button
             onClick={logout}
@@ -70,6 +78,11 @@ export function SupervisorLayout() {
           <Outlet />
         </section>
       </main>
+      <footer className="border-t border-slate-800 bg-slate-900/80 py-4">
+        <div className="mx-auto max-w-6xl px-6 text-center">
+          <p className="text-xs text-slate-500">Al-Dana Team</p>
+        </div>
+      </footer>
     </div>
   )
 }

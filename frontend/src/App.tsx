@@ -4,6 +4,7 @@ import { ControllerLayout } from './features/controller/ControllerLayout'
 import { SupervisorLayout } from './features/supervisor/SupervisorLayout'
 import { Landing } from './features/landing/Landing'
 import { ControllerDashboard } from './features/controller/ControllerDashboard'
+import { DuringMonitor } from './features/controller/DuringMonitor'
 import { PreShiftWizard } from './features/controller/PreShiftWizard'
 import { PostShiftReview } from './features/controller/PostShiftReview'
 import { SupervisorDashboard } from './features/supervisor/SupervisorDashboard'
@@ -23,6 +24,10 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <ControllerDashboard />,
+      },
+      {
+        path: 'during',
+        element: <DuringMonitor />,
       },
       {
         path: 'pre-shift',

@@ -7,7 +7,8 @@ import {
   getSimulationFrame,
 } from '../../services/dataService'
 import { subscribeToSimulation } from '../../services/simulationService'
-import type { FatigueSnapshot } from '../../types'
+import type { ControllerProfile, FatigueSnapshot, VoiceFatigueSample } from '../../types'
+import { useVoiceFatigueStore } from '../../store/useVoiceFatigueStore'
 
 const statusBadge: Record<FatigueSnapshot['status'], string> = {
   Normal: 'bg-pearl-success/15 text-pearl-success border border-pearl-success/40',
@@ -35,6 +36,9 @@ export function SupervisorDashboard() {
   const [selectedSector, setSelectedSector] = useState<string>('ALL')
 
   useEffect(() => subscribeToSimulation(setFrames), [])
+
+  const voiceLatest = useVoiceFatigueStore((state) => state.latestByController)
+  const voiceAlerts = useVoiceFatigueStore((state) => state.alertLog)
 
   const combined = useMemo(() => {
     if (!controllers) return []
@@ -70,24 +74,45 @@ export function SupervisorDashboard() {
   }, [combined, selectedSector])
 
   const activeAlerts = filtered.filter((row) => row.snapshot?.status === 'High Fatigue')
+  const voiceActiveCount = useMemo(
+    () => Object.values(voiceLatest).filter((sample) => Boolean(sample?.alertTriggered)).length,
+    [voiceLatest],
+  )
+  const voiceSummaryRows = useMemo(() => {
+    if (!controllers) return []
+    return controllers
+      .map((controller) => ({
+        controller,
+        sample: voiceLatest[controller.id],
+      }))
+      .filter(
+        (entry): entry is { controller: ControllerProfile; sample: VoiceFatigueSample } =>
+          Boolean(entry.sample),
+      )
+  }, [controllers, voiceLatest])
 
   return (
     <div className="space-y-8">
-      <header className="grid gap-6 md:grid-cols-3">
+      <header className="grid gap-6 md:grid-cols-4">
         <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
           <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Controllers online</p>
           <p className="mt-2 text-4xl font-semibold text-slate-100">{filtered.length}</p>
-          <p className="mt-2 text-sm text-slate-400">Each controller runs PEARL locally with synchronized database.</p>
+          <p className="mt-2 text-sm text-slate-400">Active controllers</p>
         </div>
         <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
           <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Active alerts</p>
           <p className="mt-2 text-4xl font-semibold text-pearl-warning">{activeAlerts.length}</p>
-          <p className="mt-2 text-sm text-slate-400">Alerts trigger micro-break suggestions once score crosses 0.70.</p>
+          <p className="mt-2 text-sm text-slate-400">Require attention</p>
+        </div>
+        <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
+          <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Voice fatigue alerts</p>
+          <p className="mt-2 text-4xl font-semibold text-pearl-warning">{voiceActiveCount}</p>
+          <p className="mt-2 text-sm text-slate-400">Voice fatigue detected</p>
         </div>
         <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
           <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Recent interventions</p>
           <p className="mt-2 text-4xl font-semibold text-slate-100">{actions?.length ?? 0}</p>
-          <p className="mt-2 text-sm text-slate-400">Every decision is logged for accountability and analytics.</p>
+          <p className="mt-2 text-sm text-slate-400">Actions taken today</p>
         </div>
       </header>
 
@@ -95,9 +120,9 @@ export function SupervisorDashboard() {
         <div className="border-b border-slate-800 px-6 py-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-slate-200">Live monitoring dashboard</h2>
+              <h2 className="text-lg font-semibold text-slate-200">Controller Status</h2>
               <p className="text-sm text-slate-400">
-                Data updates every 5 seconds via the on-premise Edge AI stream. No raw media leaves the workstation.
+                Real-time fatigue monitoring
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -125,6 +150,7 @@ export function SupervisorDashboard() {
                 <th className="px-6 py-3 text-left font-medium uppercase tracking-wider">Sector</th>
                 <th className="px-6 py-3 text-left font-medium uppercase tracking-wider">Fatigue Score</th>
                 <th className="px-6 py-3 text-left font-medium uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left font-medium uppercase tracking-wider">Voice</th>
                 <th className="px-6 py-3 text-left font-medium uppercase tracking-wider">Key Factors</th>
                 <th className="px-6 py-3 text-left font-medium uppercase tracking-wider">Recommendation</th>
               </tr>
@@ -132,6 +158,7 @@ export function SupervisorDashboard() {
             <tbody className="divide-y divide-slate-800/80 text-slate-200">
               {filtered.map(({ controller, snapshot }) => {
                 const backupName = backupBySector.get(controller.sectorId)
+                const voiceSample = voiceLatest[controller.id]
                 return (
                 <tr key={controller.id} className="hover:bg-slate-900/40">
                   <td className="px-6 py-4">
@@ -149,6 +176,20 @@ export function SupervisorDashboard() {
                     <span className={`rounded-full px-3 py-1 text-xs font-semibold ${snapshot ? statusBadge[snapshot.status] : ''}`}>
                       {snapshot?.status ?? 'Waiting'}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 text-xs text-slate-300">
+                    {voiceSample ? (
+                      <div className="space-y-1">
+                        <div className={`font-semibold text-lg ${voiceSample.alertTriggered ? 'text-pearl-warning' : 'text-pearl-success'}`}>
+                          {voiceSample.alertTriggered ? '⚠️ Alert' : '✓ Normal'}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {Math.round(voiceSample.mfccCorrelation * 100)}% match
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-slate-500">—</span>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     {snapshot ? (
@@ -180,10 +221,9 @@ export function SupervisorDashboard() {
 
       <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6">
-          <h3 className="text-lg font-semibold text-slate-200">Trend focus</h3>
+          <h3 className="text-lg font-semibold text-slate-200">Action Required</h3>
           <p className="mt-2 text-sm text-slate-400">
-            Select a controller to open their shift trend, baseline drift, and recommendation log. In the prototype the
-            following snapshot is pre-loaded for Rawan&apos;s alert.
+            Controllers needing attention
           </p>
           <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
             <p className="text-sm text-slate-300">
@@ -210,6 +250,87 @@ export function SupervisorDashboard() {
                 </p>
               </li>
             )) ?? <li className="text-xs text-slate-500">No actions logged yet.</li>}
+          </ul>
+        </div>
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-[3fr_2fr]">
+        <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6">
+          <h3 className="text-lg font-semibold text-slate-200">Voice Monitoring</h3>
+          <p className="mt-2 text-sm text-slate-400">
+            Current voice fatigue status for all controllers
+          </p>
+          <div className="mt-4 overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-800 text-sm">
+              <thead className="bg-slate-900/70 text-slate-400">
+                <tr>
+                  <th className="px-4 py-3 text-left font-medium uppercase tracking-wider">Controller</th>
+                  <th className="px-4 py-3 text-left font-medium uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left font-medium uppercase tracking-wider">Fatigue</th>
+                  <th className="px-4 py-3 text-left font-medium uppercase tracking-wider">Updated</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/70 text-slate-200">
+                {voiceSummaryRows.length > 0 ? (
+                  voiceSummaryRows.map(({ controller, sample }) => (
+                    <tr key={controller.id}>
+                      <td className="px-4 py-3">
+                        <div className="font-semibold">{controller.name}</div>
+                        <div className="text-xs text-slate-500">{controller.id}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                          sample?.alertTriggered 
+                            ? 'bg-pearl-warning/20 text-pearl-warning border border-pearl-warning/40' 
+                            : 'bg-pearl-success/20 text-pearl-success border border-pearl-success/40'
+                        }`}>
+                          {sample?.alertTriggered ? '⚠️ Alert' : '✓ Normal'}
+                        </span>
+                      </td>
+                      <td className={`px-4 py-3 font-semibold ${sample?.alertTriggered ? 'text-pearl-warning' : 'text-slate-200'}`}>
+                        {sample ? `${Math.round(sample.fatigueIndex * 100)}%` : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-slate-400">
+                        {sample
+                          ? new Date(sample.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                          : '—'}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-3 text-center text-xs text-slate-500">
+                      No voice samples recorded yet.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6">
+          <h3 className="text-lg font-semibold text-slate-200">Voice alert feed</h3>
+          <p className="mt-2 text-sm text-slate-400">Most recent reminders sent to controllers (hydration/stretch) or escalated to supervisors.</p>
+          <ul className="mt-4 space-y-4 text-sm text-slate-300">
+            {voiceAlerts.length === 0 ? (
+              <li className="text-xs text-slate-500">No voice alerts logged.</li>
+            ) : (
+              voiceAlerts.slice(0, 6).map((alert) => (
+                <li
+                  key={`${alert.timestamp}-${alert.message}`}
+                  className={`rounded-xl border px-4 py-3 ${
+                    alert.level === 'critical'
+                      ? 'border-pearl-danger/40 bg-pearl-danger/10 text-pearl-danger'
+                      : 'border-pearl-warning/40 bg-pearl-warning/10 text-pearl-warning'
+                  }`}
+                >
+                  <p className="text-xs uppercase tracking-wide text-slate-500">
+                    {new Date(alert.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {alert.controllerId}
+                  </p>
+                  <p className="mt-1 text-sm">{alert.message}</p>
+                </li>
+              ))
+            )}
           </ul>
         </div>
       </section>

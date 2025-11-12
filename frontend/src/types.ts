@@ -79,3 +79,21 @@ export interface SectorSummary {
   shiftGroup: string
 }
 
+export interface VoiceFatigueSample {
+  controllerId: string
+  timestamp: string
+  mfccCorrelation: number
+  speechRate: number
+  toneStability: number
+  fatigueIndex: number
+  circadianWeight: number
+  alertTriggered: boolean
+}
+
+export interface VoiceFatigueAlertLog {
+  timestamp: string
+  controllerId: string
+  message: string
+  level: 'info' | 'warning' | 'critical'
+}
+
