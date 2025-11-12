@@ -66,7 +66,7 @@ export function Landing() {
             <img
               src={PearlLogo}
               alt="PEARL Early Fatigue Detection System"
-              className="h-100 w-auto drop-shadow-[0_8px_20px_rgba(56,189,248,0.35)]"
+              className="h-50 w-auto drop-shadow-[0_8px_20px_rgba(56,189,248,0.35)]"
             />
           </div>
           <p className="font-medium uppercase tracking-[0.35em] text-slate-400">PEARL System</p>

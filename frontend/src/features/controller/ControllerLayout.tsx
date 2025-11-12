@@ -19,7 +19,7 @@ export function ControllerLayout() {
             <img
               src={PearlLogo}
               alt="PEARL Logo"
-              className="h-30 w-auto"
+              className="h-20 w-auto"
             />
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Controller Track</p>
