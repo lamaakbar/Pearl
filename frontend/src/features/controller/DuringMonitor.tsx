@@ -454,7 +454,6 @@ function AlertCard({ log }: { log: VoiceFatigueAlertLog }) {
     </div>
   )
 }
-
 function buildMetrics(sample: VoiceFatigueSample | null, controller: NonNullable<ReturnType<typeof useSessionStore>['controller']>): MetricDescriptor[] {
   const correlation = sample?.mfccCorrelation ?? controller.baselineFactors.toneStability
   const status = classifyStatus(sample?.mfccCorrelation ?? null)
@@ -528,7 +527,6 @@ function cleanupStream(stream: MediaStream | null) {
     }
   })
 }
-
 /**
  * Creates a synthetic baseline MFCC vector for a controller.
  * In production, this would be established during pre-shift calibration (Paper v07).
@@ -797,4 +795,6 @@ function clamp(value: number, min: number, max: number) {
 function clamp01(value: number) {
   return clamp(value, 0, 1)
 }
+
+
 

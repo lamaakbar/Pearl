@@ -1,10 +1,24 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchShiftSummaries } from '../../services/dataService'
 import { useSessionStore } from '../../store/useSessionStore'
 
+// Supportive and appreciative messages for completed shifts
+const appreciationMessages = [
+  "Thank you for your dedication and focus throughout this shift.",
+  "Your professionalism and attention to detail are truly appreciated.",
+  "Well done on completing another successful shift. Your efforts make a difference.",
+  "Thank you for maintaining safety and excellence. Rest well.",
+  "Your commitment to precision and care is valued. Great work today.",
+  "You've handled this shift with skill and composure. Well done.",
+  "Thank you for your service. Your vigilance keeps everyone safe.",
+  "Outstanding work today. Your expertise and dedication shine through.",
+]
+
 export function PostShiftReview() {
   const controller = useSessionStore((state) => state.controller)
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0)
+  
   const { data: shiftSummaries } = useQuery({
     queryKey: ['shift-summaries', controller?.id],
     queryFn: () => fetchShiftSummaries(controller?.id),
@@ -12,6 +26,25 @@ export function PostShiftReview() {
   })
 
   const latestSummary = useMemo(() => shiftSummaries?.[0], [shiftSummaries])
+  const hasCompletedShift = Boolean(latestSummary)
+
+  // Rotate appreciation messages every 20 seconds when shift is completed
+  useEffect(() => {
+    if (!hasCompletedShift) return
+    
+    const interval = setInterval(() => {
+      setCurrentMessageIndex((prev) => (prev + 1) % appreciationMessages.length)
+    }, 20000) // Change message every 20 seconds
+
+    return () => clearInterval(interval)
+  }, [hasCompletedShift])
+
+  // Randomly select initial message when shift is completed
+  useEffect(() => {
+    if (hasCompletedShift) {
+      setCurrentMessageIndex(Math.floor(Math.random() * appreciationMessages.length))
+    }
+  }, [hasCompletedShift])
 
   if (!controller) {
     return null
@@ -67,30 +100,37 @@ export function PostShiftReview() {
           )}
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6">
-          <h3 className="text-lg font-semibold text-slate-200">Post-shift check-in</h3>
-          <p className="mt-3 text-sm text-slate-400">Run the quick trio tests before you hand over the console:</p>
-          <ul className="mt-4 space-y-3 text-sm text-slate-300">
-            <li className="rounded-xl border border-slate-800/80 bg-slate-900/60 px-4 py-3">
-              <strong className="text-slate-100">Face + voice snapshot</strong>{' '}
-              <span className="text-slate-400">— detect variance in blink cadence and speech tone.</span>
-            </li>
-            <li className="rounded-xl border border-slate-800/80 bg-slate-900/60 px-4 py-3">
-              <strong className="text-slate-100">Reaction-time wrap-up</strong>{' '}
-              <span className="text-slate-400">— confirm no cognitive lag before sign-off.</span>
-            </li>
-            <li className="rounded-xl border border-slate-800/80 bg-slate-900/60 px-4 py-3">
-              <strong className="text-slate-100">Wellness note</strong>{' '}
-              <span className="text-slate-400">— flag anything that the supervisor should consider for tomorrow.</span>
-            </li>
-          </ul>
-          <button className="mt-6 w-full rounded-xl bg-pearl-primary px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-300">
-            Save post-shift record
-          </button>
-          <p className="mt-2 text-xs text-slate-500">
-            Saved analytics feed into the monthly fatigue heatmap and support supervisor action logs.
-          </p>
-        </div>
+        {hasCompletedShift && (
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6">
+            <h3 className="text-lg font-semibold text-slate-200">Shift Completion Appreciation</h3>
+            <p className="mt-3 text-sm text-slate-400">
+              Your shift has been completed. Thank you for your dedication and professionalism.
+            </p>
+            <div className="mt-6 rounded-2xl border border-pearl-primary/40 bg-pearl-primary/10 p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-pearl-primary/20">
+                    <span className="text-2xl">✨</span>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-lg font-medium text-slate-100">{appreciationMessages[currentMessageIndex]}</p>
+                  <p className="mt-3 text-sm text-slate-400">
+                    Your commitment to safety and excellence is recognized and valued. Take time to rest and recharge.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-6 space-y-3">
+              <div className="rounded-xl border border-slate-800/80 bg-slate-900/60 px-4 py-3 text-sm text-slate-300">
+                <p className="font-medium text-slate-100">Shift Summary Recorded</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Your shift data has been securely saved and will contribute to ongoing safety improvements.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
     </div>
   )
