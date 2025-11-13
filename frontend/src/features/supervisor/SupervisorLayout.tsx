@@ -20,7 +20,7 @@ export function SupervisorLayout() {
             <img
               src={PearlLogo}
               alt="PEARL Logo"
-              className="h-30 w-auto"
+              className="h-16 w-auto"
             />
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Supervisor Track</p>
