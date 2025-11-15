@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Line, LineChart, ResponsiveContainer, Tooltip, CartesianGrid, YAxis, XAxis, ReferenceArea } from 'recharts'
 import { useSessionStore } from '../../store/useSessionStore'
 import { useVoiceFatigueStore } from '../../store/useVoiceFatigueStore'
-import type { VoiceFatigueAlertLog, VoiceFatigueSample } from '../../types'
+import type { ControllerProfile, VoiceFatigueAlertLog, VoiceFatigueSample } from '../../types'
 
 const WINDOW_MS = 5000 // 5-second analysis windows per Paper v07
 const WAVEFORM_POINTS = 160
@@ -454,8 +454,7 @@ function AlertCard({ log }: { log: VoiceFatigueAlertLog }) {
     </div>
   )
 }
-function buildMetrics(sample: VoiceFatigueSample | null, controller: NonNullable<ReturnType<typeof useSessionStore>['controller']>): MetricDescriptor[] {
-  const correlation = sample?.mfccCorrelation ?? controller.baselineFactors.toneStability
+function buildMetrics(sample: VoiceFatigueSample | null, controller: ControllerProfile): MetricDescriptor[] {
   const status = classifyStatus(sample?.mfccCorrelation ?? null)
   const statusLabel = status === 'High Fatigue' ? '🔴 High' : status === 'Monitor' ? '🟡 Moderate' : '🟢 Normal'
   const statusClass =
